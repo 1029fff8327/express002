@@ -1,0 +1,4 @@
+{"code":"ENOTDIR","errno":-4052,"level":"error","path":"C:\\Users\\USER\\Desktop\\файловая система\\src\\data\\undefined","syscall":"scandir","timestamp":"2024-01-14T20:37:13.486Z"}
+{"code":"ENOTDIR","errno":-4052,"level":"error","path":"C:\\Users\\USER\\Desktop\\файловая система\\src\\data\\undefined","syscall":"scandir","timestamp":"2024-01-14T20:38:22.516Z"}
+{"code":"ENOTDIR","errno":-4052,"level":"error","path":"C:\\Users\\USER\\Desktop\\файловая система\\src\\data\\undefined","syscall":"scandir","timestamp":"2024-01-14T20:41:58.096Z"}
+{"level":"error","timestamp":"2024-01-14T21:06:17.422Z"}
