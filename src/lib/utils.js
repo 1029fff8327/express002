@@ -7,14 +7,13 @@ function getDirectory() {
 
 async function getDirectorySize(directory = getDirectory()) {
   try {
-    // Check if the directory exists
     const exists = await fs.access(directory, fs.constants.F_OK)
       .then(() => true)
       .catch(() => false);
 
     if (!exists) {
       console.error(`Directory not found: ${directory}`);
-      return 0; // Return 0 or handle the case as appropriate for your application
+      return 0;
     }
 
     const files = await fs.readdir(directory);

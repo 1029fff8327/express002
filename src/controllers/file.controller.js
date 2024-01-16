@@ -21,7 +21,7 @@ class FileController {
       const { data, ...meta } = req.file;
       const id = await this.service.create(data, meta);
 
-      getDirectorySize().then(size => {
+      getDirectorySize(path.join(__dirname, '../data')).then(size => {
         console.log('Current directory size after create:', size, 'bytes');
 
         if (Number(meta.size) + Number(size) > MB * 10) {

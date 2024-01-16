@@ -5,18 +5,17 @@ const path = require('path');
 
 class FileAdapter {
   constructor() {
-    // Absolute path to the directory
     this.dir = (id) => path.join(__dirname, '../data', `${id}`);
     this.logger = logger;
   }
 
   async create(id, data, meta) {
     const directoryPath = path.join(__dirname, '../data');
-    await fs.mkdir(directoryPath, { recursive: true }); // Create the 'data' directory if it doesn't exist
+    await fs.mkdir(directoryPath, { recursive: true });
 
     try {
       await fs.writeFile(this.dir(id), data);
-      const size = await getDirectorySize(this.dir(id));
+      const size = await getDirectorySize(path.join(__dirname, '../data'));
       this.logger.info(`End writing the file (data directory size ${size + meta.size} bytes)`);
     } catch (err) {
       this.logger.error(err);
@@ -25,10 +24,9 @@ class FileAdapter {
   }
 
   async update(id, data, meta) {
-    // The update method remains unchanged
     try {
       await fs.writeFile(this.dir(id), data);
-      const size = await getDirectorySize(this.dir(id));
+      const size = await getDirectorySize(path.join(__dirname, '../data'));
       this.logger.info(`End updating the file (data directory size ${size} bytes)`);
     } catch (err) {
       this.logger.error(err);
