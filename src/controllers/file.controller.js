@@ -10,26 +10,30 @@ class FileController {
   }
 
   async create(req, res) {
-    const directoryPath = './data';
-    const fullPath = path.resolve(__dirname, directoryPath);
-    if (!fs.existsSync(fullPath)) {
-      fs.mkdirSync(fullPath);
-    }
-
     try {
+      const directoryPath = './data';
+      const fullPath = path.resolve(__dirname, directoryPath);
+
+      if (!fs.existsSync(fullPath)) {
+        fs.mkdirSync(fullPath);
+      }
+
       const { data, ...meta } = req.file;
-      const id = await this.service.create(data, meta); // Получаем сгенерированный ObjectId
+      const id = await this.service.create(data, meta);
 
       getDirectorySize().then(size => {
+        console.log('Current directory size after create:', size, 'bytes');
+
         if (Number(meta.size) + Number(size) > MB * 10) {
+          console.log('Attention, the directory size is more than 10 megabytes');
           res.json({ status: 'ok', Warning: 'Attention, the directory size is more than 10 megabytes' });
         } else {
-          console.log('File created with ID:', id); // Выводим ID в консоль
-          res.json({ status: 'ok', id }); // Возвращаем сгенерированный ObjectId в ответе
+          console.log('File created successfully with ID:', id);
+          res.json({ status: 'ok', id });
         }
       });
     } catch (err) {
-      console.log(err);
+      console.error('Error creating file:', err);
       res.json({ status: 'error' });
     }
   }
@@ -40,10 +44,10 @@ class FileController {
       const { data, ...meta } = req.file;
       await this.service.update(id, data, meta);
 
-      console.log('File updated with ID:', id); // Выводим ID в консоль
+      console.log('File updated successfully with ID:', id);
       res.json({ status: 'ok' });
     } catch (err) {
-      console.log(err);
+      console.error('Error updating file:', err);
       res.json({ status: 'error' });
     }
   }
@@ -57,6 +61,7 @@ class FileController {
       res.setHeader('content-length', meta.size);
       stream.pipe(res);
     } catch (err) {
+      console.error('Error getting file by ID:', err);
       res.json({ status: 'error', description: 'file not found' });
     }
   }

@@ -30,3 +30,10 @@
 {"code":"ENOTDIR","errno":-4052,"level":"error","path":"C:\\Users\\USER\\Desktop\\файловая система\\src\\data\\65a50757d70f104502046207","syscall":"scandir","timestamp":"2024-01-15T10:22:15.569Z"}
 {"code":"ENOTDIR","errno":-4052,"level":"error","path":"C:\\Users\\USER\\Desktop\\файловая система\\src\\data\\65a5091f4fbefe770b54ec3e","syscall":"scandir","timestamp":"2024-01-15T10:29:51.670Z"}
 {"code":"ENOTDIR","errno":-4052,"level":"error","path":"C:\\Users\\USER\\Desktop\\файловая система\\src\\data\\65a50eb6a82a6063d73e3afb","syscall":"scandir","timestamp":"2024-01-15T10:53:42.837Z"}
+{"code":"ENOTDIR","errno":-4052,"level":"error","path":"C:\\Users\\USER\\Desktop\\файловая система\\src\\data\\65a51768a70e4a999d5d72eb","syscall":"scandir","timestamp":"2024-01-15T11:30:48.848Z"}
+{"code":"ENOTDIR","errno":-4052,"level":"error","path":"C:\\Users\\USER\\Desktop\\файловая система\\src\\data\\65a51ba783dddcb0d448113b","syscall":"scandir","timestamp":"2024-01-15T11:48:55.655Z"}
+{"code":"ENOTDIR","errno":-4052,"level":"error","path":"C:\\Users\\USER\\Desktop\\файловая система\\src\\data\\65a59e2baa51f77f4b586b58","syscall":"scandir","timestamp":"2024-01-15T21:05:47.959Z"}
+{"code":"ENOTDIR","errno":-4052,"level":"error","path":"C:\\Users\\USER\\Desktop\\файловая система\\src\\data\\65a60dcd68b62e7e7357e20e","syscall":"scandir","timestamp":"2024-01-16T05:02:05.885Z"}
+{"code":"ENOTDIR","errno":-4052,"level":"error","path":"C:\\Users\\USER\\Desktop\\файловая система\\src\\data\\65a60e0868b62e7e7357e210","syscall":"scandir","timestamp":"2024-01-16T05:03:04.851Z"}
+{"code":"ENOTDIR","errno":-4052,"level":"error","path":"C:\\Users\\USER\\Desktop\\файловая система\\src\\data\\65a60e3b68b62e7e7357e212","syscall":"scandir","timestamp":"2024-01-16T05:03:55.910Z"}
+{"code":"ENOTDIR","errno":-4052,"level":"error","path":"C:\\Users\\USER\\Desktop\\файловая система\\src\\data\\65a6119204b566e7e7292f96","syscall":"scandir","timestamp":"2024-01-16T05:18:10.455Z"}

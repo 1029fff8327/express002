@@ -108,4 +108,4 @@ fileRouter.get('/:name', fileMiddleware, (req, res) => controller.getById(req, r
 fileRouter.use('/docs', swaggerUi.serve);
 fileRouter.get('/docs', swaggerUi.setup(swaggerConfig));
 
-module.exports = fileRouter;
+module.exports = fileRouter; 
