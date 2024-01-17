@@ -15,4 +15,11 @@ const logger = createLogger({
   ]
 });
 
-module.exports = logger;
+function logFileOperation(operation, id, size) {
+  logger.info(`${operation} file with ID ${id} (data directory size ${size} bytes)`);
+}
+
+module.exports = {
+  logger,
+  logFileOperation,
+};

@@ -3,6 +3,7 @@ const path = require('path');
 const MB = 1e+6;
 const FileService = require('../services/file.service');
 const { getDirectorySize } = require('./../lib/utils');
+const { logFileOperation } = require('../lib/logger');
 
 class FileController {
   constructor(fileService = new FileService()) {
@@ -14,20 +15,15 @@ class FileController {
       const directoryPath = '../data';
       const fullPath = path.resolve(__dirname, directoryPath);
 
-      // Create the data directory if it doesn't exist
       if (!fs.existsSync(fullPath)) {
         fs.mkdirSync(fullPath);
       }
 
       const { data, ...meta } = req.file;
-
-      // Call the service method to create a new file
       const id = await this.service.create(data, meta);
 
-      // Get the current directory size
       const size = await getDirectorySize();
-
-      console.log('Current directory size after create:', size, 'bytes');
+      logFileOperation('Create', id, Number(size) + Number(meta.size));
 
       if (Number(meta.size) + Number(size) > MB * 10) {
         console.log('Attention, the directory size is more than 10 megabytes');
@@ -46,11 +42,10 @@ class FileController {
     try {
       const id = req.params.id;
       const { data, ...meta } = req.file;
-
-      // Call the service method to update the file
       const updateResult = await this.service.update(id, data, meta);
 
       if (updateResult) {
+        logFileOperation('Update', id, await this.service.getDirectorySize());
         console.log('File updated successfully with ID:', id);
         res.json({ status: 'ok' });
       } else {
@@ -79,12 +74,12 @@ class FileController {
         return;
       }
 
+      logFileOperation('Retrieve', id, await this.service.getDirectorySize());
       console.log('File retrieved successfully with ID:', id, 'and meta:', meta);
 
       res.setHeader('content-type', meta.mimetype);
       res.setHeader('content-length', meta.size);
 
-      // Проверим, что stream является объектом и имеет метод pipe
       if (stream && typeof stream.pipe === 'function') {
         stream.pipe(res);
       } else {

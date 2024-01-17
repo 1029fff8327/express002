@@ -37,7 +37,17 @@ async function getDirectorySize(directory = getDirectory()) {
   }
 }
 
+async function writeFileAsync(filePath, data) {
+  try {
+    await fs.writeFile(filePath, data);
+  } catch (err) {
+    console.error(`Error writing file: ${err.message}`);
+    throw err;
+  }
+}
+
 module.exports = {
   getDirectory,
-  getDirectorySize
+  getDirectorySize,
+  writeFileAsync,
 };

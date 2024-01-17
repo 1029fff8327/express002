@@ -1,41 +1,42 @@
 const fs = require('fs');
 const { promisify } = require('util');
-const logger = require('./logger');
-const { getDirectorySize } = require('./utils');
 const path = require('path');
+const logger = require('./logger');
+const { getDirectorySize, writeFileAsync } = require('./utils');
 
 const createReadStreamAsync = promisify(fs.createReadStream);
 
 class FileAdapter {
   constructor() {
     this.dir = (id) => path.join(__dirname, '../data', `${id}`);
-    this.logger = logger;
   }
 
   async create(id, data, meta) {
     const directoryPath = path.join(__dirname, '../data');
+    const filePath = this.dir(id);
 
     try {
-      await fs.promises.writeFile(this.dir(id), data);
+      await writeFileAsync(filePath, data);
       const size = await getDirectorySize(directoryPath);
-      this.logger.info(`End writing the file (data directory size ${size + meta.size} bytes)`);
-      return true; // Return true on successful creation
+      logger.logFileOperation('Create', id, size + meta.size);
+      return true;
     } catch (err) {
-      this.logger.error(`Error creating file (ID: ${id}): ${err.message}`);
+      logger.logger.error(`Error creating file (ID: ${id}): ${err.message}`);
       throw err;
     }
   }
 
   async update(id, data, meta) {
     const directoryPath = path.join(__dirname, '../data');
+    const filePath = this.dir(id);
 
     try {
-      await fs.promises.writeFile(this.dir(id), data);
+      await writeFileAsync(filePath, data);
       const size = await getDirectorySize(directoryPath);
-      this.logger.info(`End updating the file (data directory size ${size} bytes)`);
+      logger.logFileOperation('Update', id, size);
       return true;
     } catch (err) {
-      this.logger.error(`Error updating file (ID: ${id}): ${err.message}`);
+      logger.logger.error(`Error updating file (ID: ${id}): ${err.message}`);
       throw err;
     }
   }
@@ -46,19 +47,18 @@ class FileAdapter {
       const fileStats = await fs.promises.stat(filePath);
 
       if (!fileStats.isFile()) {
-        // File not found
         return { stream: null, meta: null };
       }
 
       const stream = createReadStreamAsync(filePath, { highWaterMark: 16 * 1024 });
       const fileMeta = {
-        mimetype: 'application/octet-stream', // Set a default mimetype if needed
+        mimetype: 'application/octet-stream',
         size: fileStats.size,
       };
 
       return { stream, meta: fileMeta };
     } catch (err) {
-      this.logger.error(`Error getting file by ID (FileAdapter): ${err.message}`);
+      logger.logger.error(`Error getting file by ID (FileAdapter): ${err.message}`);
       throw err;
     }
   }
