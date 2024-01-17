@@ -94,6 +94,26 @@ module.exports = {
               },
             },
           },
+          '404': {
+            description: 'File not found',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    status: {
+                      type: 'string',
+                      example: 'error',
+                    },
+                    description: {
+                      type: 'string',
+                      example: 'file not found',
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       },
       get: {
@@ -120,26 +140,6 @@ module.exports = {
                     status: {
                       type: 'string',
                       example: 'ok',
-                    },
-                  },
-                },
-              },
-            },
-          },
-          '404': {
-            description: 'File not found',
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    status: {
-                      type: 'string',
-                      example: 'error',
-                    },
-                    description: {
-                      type: 'string',
-                      example: 'file not found',
                     },
                   },
                 },

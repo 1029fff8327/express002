@@ -1,10 +1,10 @@
 module.exports = (req, res, next) => {
 	let file = Buffer.from('');
-  
+	
 	req.on('data', chunk => {
 	  file = Buffer.concat([file, chunk]);
 	});
-  
+	
 	req.on('end', () => {
 	  req.file = {
 		data: file,
@@ -16,4 +16,4 @@ module.exports = (req, res, next) => {
 	  };
 	  next();
 	});
-  };
+  };  

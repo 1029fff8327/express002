@@ -11,27 +11,31 @@ class FileController {
 
   async create(req, res) {
     try {
-      const directoryPath = './data';
+      const directoryPath = '../data';
       const fullPath = path.resolve(__dirname, directoryPath);
 
+      // Create the data directory if it doesn't exist
       if (!fs.existsSync(fullPath)) {
         fs.mkdirSync(fullPath);
       }
 
       const { data, ...meta } = req.file;
+
+      // Call the service method to create a new file
       const id = await this.service.create(data, meta);
 
-      getDirectorySize(path.join(__dirname, '../data')).then(size => {
-        console.log('Current directory size after create:', size, 'bytes');
+      // Get the current directory size
+      const size = await getDirectorySize();
 
-        if (Number(meta.size) + Number(size) > MB * 10) {
-          console.log('Attention, the directory size is more than 10 megabytes');
-          res.json({ status: 'ok', Warning: 'Attention, the directory size is more than 10 megabytes' });
-        } else {
-          console.log('File created successfully with ID:', id);
-          res.json({ status: 'ok', id });
-        }
-      });
+      console.log('Current directory size after create:', size, 'bytes');
+
+      if (Number(meta.size) + Number(size) > MB * 10) {
+        console.log('Attention, the directory size is more than 10 megabytes');
+        res.json({ status: 'ok', Warning: 'Attention, the directory size is more than 10 megabytes' });
+      } else {
+        console.log('File created successfully with ID:', id);
+        res.json({ status: 'ok', id });
+      }
     } catch (err) {
       console.error('Error creating file:', err);
       res.json({ status: 'error' });
@@ -42,13 +46,25 @@ class FileController {
     try {
       const id = req.params.id;
       const { data, ...meta } = req.file;
-      await this.service.update(id, data, meta);
 
-      console.log('File updated successfully with ID:', id);
-      res.json({ status: 'ok' });
+      // Call the service method to update the file
+      const updateResult = await this.service.update(id, data, meta);
+
+      if (updateResult) {
+        console.log('File updated successfully with ID:', id);
+        res.json({ status: 'ok' });
+      } else {
+        console.error('Error updating file with ID:', id);
+        res.status(500).json({ status: 'error', message: 'Internal Server Error' });
+      }
     } catch (err) {
       console.error('Error updating file:', err);
-      res.json({ status: 'error' });
+
+      if (err.message === 'File not found') {
+        res.status(404).json({ status: 'error', description: 'File not found' });
+      } else {
+        res.status(500).json({ status: 'error', message: 'Internal Server Error' });
+      }
     }
   }
 
@@ -57,12 +73,27 @@ class FileController {
       const id = req.params.id;
       const { stream, meta } = await this.service.getById(id);
 
+      if (!meta) {
+        console.error('Meta information is undefined. File not found.');
+        res.status(404).json({ status: 'error', description: 'File not found' });
+        return;
+      }
+
+      console.log('File retrieved successfully with ID:', id, 'and meta:', meta);
+
       res.setHeader('content-type', meta.mimetype);
       res.setHeader('content-length', meta.size);
-      stream.pipe(res);
+
+      // Проверим, что stream является объектом и имеет метод pipe
+      if (stream && typeof stream.pipe === 'function') {
+        stream.pipe(res);
+      } else {
+        console.error('Stream is not valid. File not found or cannot be streamed.');
+        res.status(404).json({ status: 'error', description: 'File not found or cannot be streamed' });
+      }
     } catch (err) {
       console.error('Error getting file by ID:', err);
-      res.json({ status: 'error', description: 'file not found' });
+      res.status(500).json({ status: 'error', message: 'Internal Server Error' });
     }
   }
 }
