@@ -1,96 +1,120 @@
-const fs = require('fs');
 const path = require('path');
-const MB = 1e+6;
-const FileService = require('../services/file.service');
-const { getDirectorySize } = require('./../lib/utils');
-const { logFileOperation } = require('../lib/logger');
+const fs = require('fs');
+const FileAdapter = require('./../lib/file.adapter');
+const { getDirectorySize, writeFileAsync } = require('./../lib/utils');
+const { logFileOperation } = require('./../lib/logger');
+const sizeOf = require('image-size');
 
-class FileController {
-  constructor(fileService = new FileService()) {
-    this.service = fileService;
+class FileService {
+  constructor(fileAdapter, fileModel) {
+    this.fileAdapter = fileAdapter;
+    this.model = fileModel;
   }
 
-  async create(req, res) {
+  async checkImage(file) {
     try {
-      const directoryPath = '../data';
-      const fullPath = path.resolve(__dirname, directoryPath);
-
-      if (!fs.existsSync(fullPath)) {
-        fs.mkdirSync(fullPath);
+      const dimensions = sizeOf(file);
+      if (dimensions.type !== 'image') {
+        throw new Error('The file is not an image.');
       }
-
-      const { data, ...meta } = req.file;
-      const id = await this.service.create(data, meta);
-
-      const size = await getDirectorySize();
-      logFileOperation('Create', id, Number(size) + Number(meta.size));
-
-      if (Number(meta.size) + Number(size) > MB * 10) {
-        console.log('Attention, the directory size is more than 10 megabytes');
-        res.json({ status: 'ok', Warning: 'Attention, the directory size is more than 10 megabytes' });
-      } else {
-        console.log('File created successfully with ID:', id);
-        res.json({ status: 'ok', id });
-      }
-    } catch (err) {
-      console.error('Error creating file:', err);
-      res.json({ status: 'error' });
+      return true;
+    } catch (error) {
+      console.error('Error checking image:', error.message);
+      throw error;
     }
   }
 
-  async update(req, res) {
+  async createPostFolder(postId) {
     try {
-      const id = req.params.id;
-      const { data, ...meta } = req.file;
-      const updateResult = await this.service.update(id, data, meta);
+      const folderPath = path.join(__dirname, '../data', postId);
+
+      if (!fs.existsSync(folderPath)) {
+        fs.mkdirSync(folderPath);
+      }
+
+      return folderPath;
+    } catch (err) {
+      console.error(`Error creating folder for post ${postId}: ${err.message}`);
+      throw err;
+    }
+  }
+
+  async create(file, meta, postId) {
+    try {
+      await this.checkImage(file);
+
+      const postFolderPath = await this.createPostFolder(postId);
+
+      const newFile = new this.model({
+        name: meta.originalname,
+        size: meta.size,
+        mimetype: meta.mimetype,
+        createDate: new Date(),
+      });
+
+      const savedFile = await newFile.save();
+      const id = savedFile._id.toString();
+
+      logFileOperation('Create', id, await this.getDirectorySize(postFolderPath));
+
+      const result = await this.fileAdapter.create(id, file, meta);
+
+      if (result) {
+        return { id, xApiKey: 'ваш_x-api-key', otherInfo: 'дополнительная информация' };
+      } else {
+        throw new Error('File creation failed in FileAdapter');
+      }
+    } catch (err) {
+      console.error(`Error creating file: ${err.message}`);
+      throw err;
+    }
+  }
+
+  async update(id, file, meta) {
+    try {
+      logFileOperation('Update', id, await this.getDirectorySize());
+
+      const updatedFile = await this.model.findByIdAndUpdate(id, {
+        $set: { size: meta.size, mimetype: meta.mimetype },
+      }, { new: true });
+
+      if (!updatedFile) {
+        throw new Error('File not found');
+      }
+
+      const updateResult = await this.fileAdapter.update(id, file, meta);
 
       if (updateResult) {
-        logFileOperation('Update', id, await this.service.getDirectorySize());
-        console.log('File updated successfully with ID:', id);
-        res.json({ status: 'ok' });
+        return updateResult;
       } else {
-        console.error('Error updating file with ID:', id);
-        res.status(500).json({ status: 'error', message: 'Internal Server Error' });
+        throw new Error('File update failed in FileAdapter');
       }
     } catch (err) {
-      console.error('Error updating file:', err);
-
-      if (err.message === 'File not found') {
-        res.status(404).json({ status: 'error', description: 'File not found' });
-      } else {
-        res.status(500).json({ status: 'error', message: 'Internal Server Error' });
-      }
+      console.error(`Error updating file in FileService: ${err.message}`);
+      throw err;
     }
   }
 
-  async getById(req, res) {
+  async getById(id) {
     try {
-      const id = req.params.id;
-      const { stream, meta } = await this.service.getById(id);
-
-      if (!meta) {
-        console.error('Meta information is undefined. File not found.');
-        res.status(404).json({ status: 'error', description: 'File not found' });
-        return;
-      }
-
-      logFileOperation('Retrieve', id, await this.service.getDirectorySize());
-      console.log('File retrieved successfully with ID:', id, 'and meta:', meta);
-
-      res.setHeader('content-type', meta.mimetype);
-      res.setHeader('content-length', meta.size);
-
-      if (stream && typeof stream.pipe === 'function') {
-        stream.pipe(res);
-      } else {
-        console.error('Stream is not valid. File not found or cannot be streamed.');
-        res.status(404).json({ status: 'error', description: 'File not found or cannot be streamed' });
-      }
+      const { stream, meta } = await this.fileAdapter.getById(id);
+      logFileOperation('Retrieve', id, await this.getDirectorySize());
+      return { stream, meta };
     } catch (err) {
-      console.error('Error getting file by ID:', err);
-      res.status(500).json({ status: 'error', message: 'Internal Server Error' });
+      console.error(`Error getting file by ID ${id} in FileService: ${err.message}`);
+      throw err;
+    }
+  }
+
+  async getDirectorySize(postId) {
+    try {
+      const directoryPath = path.join(__dirname, '../data', postId);
+      return await getDirectorySize(directoryPath);
+    } catch (err) {
+      console.error(`Error getting directory size in FileService: ${err.message}`);
+      throw err;
     }
   }
 }
 
-module.exports = FileController;
+module.exports = FileService;

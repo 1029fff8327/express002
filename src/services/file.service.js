@@ -2,6 +2,8 @@ const path = require('path');
 const FileAdapter = require('./../lib/file.adapter');
 const { getDirectorySize, writeFileAsync } = require('./../lib/utils');
 const { logFileOperation } = require('./../lib/logger');
+const sizeOf = require('image-size');
+const { v4: uuidv4 } = require('uuid'); 
 
 class FileService {
   constructor(fileAdapter, fileModel) {
@@ -9,24 +11,34 @@ class FileService {
     this.model = fileModel;
   }
 
-  async create(file, meta) {
+  async checkImage(file) {
     try {
-      const newFile = new this.model({
-        name: meta.originalname,
-        size: meta.size,
-        mimetype: meta.mimetype,
-        createDate: new Date(),
-      });
+      const dimensions = sizeOf(file);
+      if (dimensions.type !== 'image') {
+        throw new Error('The file is not an image.');
+      }
+      return true;
+    } catch (error) {
+      console.error('Error checking image:', error.message);
+      throw error;
+    }
+  }
 
-      const savedFile = await newFile.save();
-      const id = savedFile._id.toString();
+  async create(postData) {
+    try {
+      const { file, meta } = postData;
+      await this.checkImage(file);
 
-      logFileOperation('Create', id, await this.getDirectorySize());
+      const postId = uuidv4(); 
+      const postDir = path.join(__dirname, '../data', postId);
 
-      const result = await this.fileAdapter.create(id, file, meta);
+      await writeFileAsync(path.join(postDir, 'post.json'), JSON.stringify(meta));
+
+      logFileOperation('Create', postId, await this.getDirectorySize());
+      const result = await this.fileAdapter.create(postId, file, meta);
 
       if (result) {
-        return id;
+        return { postId, xApiKey: 'ваш_x-api-key', otherInfo: 'дополнительная информация' };
       } else {
         throw new Error('File creation failed in FileAdapter');
       }
